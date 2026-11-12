@@ -1,0 +1,44 @@
+# Обновляет data/kitis-data.js с сервера расписания колледжа; после этого GitHub Pages публикует сайт заново,
+# а экран в колледже сам подхватывает новые данные (страница перезагружается раз в час).
+#
+# Когда запускается (время калининградское, UTC+2):
+#   понедельник – суббота — каждый час с 06:23 до 20:23;
+#   воскресенье — каждые 2 часа с 10:23 до 20:23 (на случай, если опубликуют следующую неделю).
+# Вручную: вкладка Actions → «Обновление расписания» → Run workflow.
+name: Обновление расписания
+
+on:
+  schedule:
+    - cron: '23 4-18 * * 1-6'
+    - cron: '23 8-18/2 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-schedule
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Скачать расписание с сервера колледжа
+        run: node parser/update.mjs
+      - name: Сохранить изменения
+        run: |
+          if git diff --quiet -- data/kitis-data.js; then
+            echo "Расписание не изменилось"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/kitis-data.js
+          git commit -m "Обновлено расписание с сервера колледжа"
+          git push
