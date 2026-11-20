@@ -68,6 +68,12 @@
     homed = true;
   }
 
+  // рамка фокуса только для тех, кто ходит по сайту клавишей Tab
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'Tab' || e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') d.classList.add('kbd');
+  }, true);
+  window.addEventListener('pointerdown', function () { d.classList.remove('kbd'); }, true);
+
   /* ---------- свежие данные раз в час ---------- */
   var loadedAt = Date.now();
   var checking = false;
